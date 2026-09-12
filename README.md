@@ -765,6 +765,8 @@ Elasticsearch heap
 Cache hit ratio
 ```
 
+This benchmark plan is implemented as a runnable k6 script in [`k6/search-benchmark.js`](k6/search-benchmark.js) (usage: [`k6/README.md`](k6/README.md)) rather than left as a description — it seeds sample documents, then ramps 100 → 250 → 500 → 1000 concurrent users against `search-service` directly, enforcing a `p95 < 500ms` threshold at each level.
+
 ---
 
 ## 16. Operations and Availability
