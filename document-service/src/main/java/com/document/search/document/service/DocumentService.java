@@ -1,9 +1,9 @@
 package com.document.search.document.service;
 
+import com.document.search.common.DocumentEvent;
 import com.document.search.document.domain.DocumentEntity;
 import com.document.search.document.domain.DocumentRequest;
 import com.document.search.document.domain.DocumentResponse;
-import com.example.search.common.DocumentEvent;
 import com.document.search.document.repository.DocumentRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -66,17 +66,25 @@ public class DocumentService {
     }
 
     private String toJson(Map<String, Object> value) {
-        try { return value == null ? "{}" : objectMapper.writeValueAsString(value); }
-        catch (JsonProcessingException ex) { throw new IllegalArgumentException("Invalid metadata", ex); }
+        try {
+            return value == null ? "{}" : objectMapper.writeValueAsString(value);
+        } catch (JsonProcessingException ex) {
+            throw new IllegalArgumentException("Invalid metadata", ex);
+        }
     }
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> fromJson(String value) {
-        try { return value == null ? Map.of() : objectMapper.readValue(value, Map.class); }
-        catch (Exception ex) { return Map.of(); }
+        try {
+            return value == null ? Map.of() : objectMapper.readValue(value, Map.class);
+        } catch (Exception ex) {
+            return Map.of();
+        }
     }
 
     public static class DocumentNotFoundException extends RuntimeException {
-        public DocumentNotFoundException(String id) { super("Document not found: " + id); }
+        public DocumentNotFoundException(String id) {
+            super("Document not found: " + id);
+        }
     }
 }

@@ -1,4 +1,4 @@
-package com.example.search.common;
+package com.document.search.common;
 
 import java.time.Instant;
 import java.util.Map;
@@ -13,5 +13,5 @@ public record DocumentEvent(
         Instant createdAt,
         Instant updatedAt
 ) {
-    public enum EventType { CREATED, UPDATED, DELETED }
+    public enum EventType {CREATED, UPDATED, DELETED}
 }

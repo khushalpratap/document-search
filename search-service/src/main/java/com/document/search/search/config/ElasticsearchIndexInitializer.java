@@ -1,6 +1,6 @@
 package com.document.search.search.config;
 
-import com.example.search.common.IndexedDocument;
+import com.document.search.common.IndexedDocument;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.data.elasticsearch.core.ElasticsearchOperations;

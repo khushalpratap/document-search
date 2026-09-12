@@ -1,8 +1,8 @@
 package com.document.search.document.controller;
 
+import com.document.search.common.TenantHeaders;
 import com.document.search.document.domain.DocumentRequest;
 import com.document.search.document.domain.DocumentResponse;
-import com.example.search.common.TenantHeaders;
 import com.document.search.document.service.DocumentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -12,7 +12,10 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/documents")
 public class DocumentController {
     private final DocumentService service;
-    public DocumentController(DocumentService service) { this.service = service; }
+
+    public DocumentController(DocumentService service) {
+        this.service = service;
+    }
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)

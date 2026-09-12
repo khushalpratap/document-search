@@ -1,6 +1,6 @@
 package com.document.search.gateway.filter;
 
-import com.example.search.common.TenantHeaders;
+import com.document.search.common.TenantHeaders;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -24,5 +24,8 @@ public class CorrelationIdFilter implements GlobalFilter, Ordered {
         return chain.filter(mutated);
     }
 
-    @Override public int getOrder() { return -100; }
+    @Override
+    public int getOrder() {
+        return -100;
+    }
 }

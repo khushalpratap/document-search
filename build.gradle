@@ -9,7 +9,7 @@ ext {
 }
 
 allprojects {
-    group = 'com.example.search'
+    group = 'com.document.search'
     version = '1.0.0'
 }
 

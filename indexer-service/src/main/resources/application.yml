@@ -11,8 +11,8 @@ spring:
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
-        spring.json.trusted.packages: com.example.search.common
-        spring.json.value.default.type: com.example.search.common.DocumentEvent
+        spring.json.trusted.packages: com.document.search.common
+        spring.json.value.default.type: com.document.search.common.DocumentEvent
   elasticsearch:
     uris: ${ELASTICSEARCH_URI:http://localhost:9200}
 management:

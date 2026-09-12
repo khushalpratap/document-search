@@ -1,6 +1,6 @@
 package com.document.search.search.controller;
 
-import com.example.search.common.TenantHeaders;
+import com.document.search.common.TenantHeaders;
 import com.document.search.search.domain.SearchResponse;
 import com.document.search.search.service.SearchService;
 import org.springframework.web.bind.annotation.*;
@@ -15,13 +15,16 @@ public class SearchController {
     private static final int MAX_FACET_FIELDS = 10;
 
     private final SearchService service;
-    public SearchController(SearchService service) { this.service = service; }
+
+    public SearchController(SearchService service) {
+        this.service = service;
+    }
 
     @GetMapping
     public SearchResponse search(@RequestHeader(TenantHeaders.TENANT_ID) String tenantId,
-                                  @RequestParam("q") String query,
-                                  @RequestParam(value = "facets", required = false) List<String> facets,
-                                  @RequestParam(value = "filter", required = false) List<String> filters) {
+                                 @RequestParam("q") String query,
+                                 @RequestParam(value = "facets", required = false) List<String> facets,
+                                 @RequestParam(value = "filter", required = false) List<String> filters) {
         if (query == null || query.isBlank()) return new SearchResponse(List.of(), Map.of());
         return service.search(tenantId, query, normalizeFacetFields(facets), parseFilters(filters));
     }

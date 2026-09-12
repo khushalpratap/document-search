@@ -1,9 +1,12 @@
 package com.document.search.document.controller;
 
-import com.example.search.common.ApiError;
+import com.document.search.common.ApiError;
 import com.document.search.document.service.DocumentService.DocumentNotFoundException;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+
 import java.time.Instant;
 
 @RestControllerAdvice
