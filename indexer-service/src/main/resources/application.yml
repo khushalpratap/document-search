@@ -1,0 +1,28 @@
+server:
+  port: 8082
+spring:
+  application:
+    name: indexer-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: document-indexer
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.example.search.common
+        spring.json.value.default.type: com.example.search.common.DocumentEvent
+  elasticsearch:
+    uris: ${ELASTICSEARCH_URI:http://localhost:9200}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+app:
+  kafka:
+    topic: document-events

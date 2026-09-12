@@ -1,0 +1,29 @@
+server:
+  port: 8081
+spring:
+  application:
+    name: document-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/documentdb}
+    username: ${SPRING_DATASOURCE_USERNAME:document}
+    password: ${SPRING_DATASOURCE_PASSWORD:document}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      properties:
+        spring.json.add.type.headers: false
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+app:
+  kafka:
+    topic: document-events

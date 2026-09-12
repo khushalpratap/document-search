@@ -1,0 +1,205 @@
+
+  services:
+
+    postgres:
+      image: postgres:16
+      container_name: document-search-postgres
+      environment:
+        POSTGRES_DB: documentdb
+        POSTGRES_USER: document
+        POSTGRES_PASSWORD: document
+      ports:
+        - "5432:5432"
+      volumes:
+        - postgres_data:/var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U document -d documentdb"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+      networks:
+        - document-search-network
+
+
+    zookeeper:
+      image: confluentinc/cp-zookeeper:7.6.0
+      container_name: document-search-zookeeper
+      environment:
+        ZOOKEEPER_CLIENT_PORT: 2181
+        ZOOKEEPER_TICK_TIME: 2000
+      ports:
+        - "2181:2181"
+      networks:
+        - document-search-network
+
+
+    kafka:
+      image: confluentinc/cp-kafka:7.6.0
+      container_name: document-search-kafka
+      depends_on:
+        - zookeeper
+      ports:
+        - "9092:9092"
+      environment:
+        KAFKA_BROKER_ID: 1
+        KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+
+        KAFKA_LISTENERS: INTERNAL://0.0.0.0:29092,EXTERNAL://0.0.0.0:9092
+        KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+        KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+        KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+
+        KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+        KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+        KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+        KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+        KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+      healthcheck:
+        test:
+          [
+            "CMD-SHELL",
+            "kafka-topics --bootstrap-server localhost:9092 --list >/dev/null 2>&1"
+          ]
+        interval: 15s
+        timeout: 10s
+        retries: 10
+        start_period: 20s
+
+      networks:
+        - document-search-network
+
+
+    elasticsearch:
+      image: docker.elastic.co/elasticsearch/elasticsearch:8.15.0
+      container_name: document-search-elasticsearch
+      environment:
+        discovery.type: single-node
+        xpack.security.enabled: "false"
+        ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+      ports:
+        - "9200:9200"
+      volumes:
+        - elasticsearch_data:/usr/share/elasticsearch/data
+      healthcheck:
+        test:
+          [
+            "CMD-SHELL",
+            "curl -fs http://localhost:9200/_cluster/health >/dev/null || exit 1"
+          ]
+        interval: 15s
+        timeout: 10s
+        retries: 10
+        start_period: 30s
+      networks:
+        - document-search-network
+
+
+    redis:
+      image: redis:7-alpine
+      container_name: document-search-redis
+      ports:
+        - "6379:6379"
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+      networks:
+        - document-search-network
+
+
+    gateway:
+      build:
+        context: .
+        dockerfile: Dockerfile
+        args:
+          MODULE: gateway
+      environment:
+        DOCUMENT_SERVICE_URL: http://document-service:8081
+        SEARCH_SERVICE_URL: http://search-service:8083
+        REDIS_HOST: redis
+        GATEWAY_API_KEY: assessment-key
+      ports:
+        - "8080:8080"
+      depends_on:
+        redis:
+          condition: service_healthy
+        document-service:
+          condition: service_started
+        search-service:
+          condition: service_started
+      networks:
+        - document-search-network
+
+
+    document-service:
+      build:
+        context: .
+        dockerfile: Dockerfile
+        args:
+          MODULE: document-service
+      environment:
+        KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+        SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/documentdb
+        SPRING_DATASOURCE_USERNAME: document
+        SPRING_DATASOURCE_PASSWORD: document
+      ports:
+        - "8081:8081"
+      depends_on:
+        postgres:
+          condition: service_healthy
+        kafka:
+          condition: service_healthy
+      networks:
+        - document-search-network
+
+
+    indexer-service:
+      build:
+        context: .
+        dockerfile: Dockerfile
+        args:
+          MODULE: indexer-service
+      environment:
+        KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+        ELASTICSEARCH_URI: http://elasticsearch:9200
+      ports:
+        - "8082:8082"
+      depends_on:
+        kafka:
+          condition: service_healthy
+        elasticsearch:
+          condition: service_healthy
+      networks:
+        - document-search-network
+
+
+    search-service:
+      build:
+        context: .
+        dockerfile: Dockerfile
+        args:
+          MODULE: search-service
+      environment:
+        ELASTICSEARCH_URI: http://elasticsearch:9200
+      ports:
+        - "8083:8083"
+      depends_on:
+        elasticsearch:
+          condition: service_healthy
+      networks:
+        - document-search-network
+
+
+  # IMPORTANT: volumes is outside services
+  volumes:
+    postgres_data:
+    elasticsearch_data:
+
+
+  # Network is also outside services
+  networks:
+    document-search-network:
+      driver: bridge
+

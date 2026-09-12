@@ -1,0 +1,49 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+  cloud:
+    gateway:
+      routes:
+        - id: document-service
+          uri: ${DOCUMENT_SERVICE_URL:http://localhost:8081}
+          predicates:
+            - Path=/documents/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@tenantKeyResolver}"
+                redis-rate-limiter.replenishRate: 100
+                redis-rate-limiter.burstCapacity: 200
+        - id: search-service
+          uri: ${SEARCH_SERVICE_URL:http://localhost:8083}
+          predicates:
+            - Path=/search/**
+          filters:
+            - name: RequestRateLimiter
+              args:
+                key-resolver: "#{@tenantKeyResolver}"
+                redis-rate-limiter.replenishRate: 200
+                redis-rate-limiter.burstCapacity: 400
+
+  main:
+    web-application-type: reactive
+
+gateway:
+  auth:
+    api-key: ${GATEWAY_API_KEY:assessment-key}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
