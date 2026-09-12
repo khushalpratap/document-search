@@ -175,19 +175,68 @@
         - document-search-network
 
 
-    search-service:
+    search-service-blue:
       build:
         context: .
         dockerfile: Dockerfile
         args:
           MODULE: search-service
+      container_name: document-search-search-service-blue
       environment:
         ELASTICSEARCH_URI: http://elasticsearch:9200
       ports:
-        - "8083:8083"
+        - "8091:8083"
       depends_on:
         elasticsearch:
           condition: service_healthy
+      healthcheck:
+        test: ["CMD-SHELL", "curl -fs http://localhost:8083/actuator/health >/dev/null || exit 1"]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+        start_period: 30s
+      networks:
+        - document-search-network
+
+
+    search-service-green:
+      build:
+        context: .
+        dockerfile: Dockerfile
+        args:
+          MODULE: search-service
+      container_name: document-search-search-service-green
+      environment:
+        ELASTICSEARCH_URI: http://elasticsearch:9200
+      ports:
+        - "8092:8083"
+      depends_on:
+        elasticsearch:
+          condition: service_healthy
+      healthcheck:
+        test: ["CMD-SHELL", "curl -fs http://localhost:8083/actuator/health >/dev/null || exit 1"]
+        interval: 10s
+        timeout: 5s
+        retries: 10
+        start_period: 30s
+      networks:
+        - document-search-network
+
+
+    # nginx reverse proxy fronting search-service-blue/search-service-green.
+    # Keeps the "search-service" network identity so gateway's SEARCH_SERVICE_URL
+    # (http://search-service:8083) doesn't need to change when switching colors.
+    search-service:
+      image: nginx:1.27-alpine
+      container_name: document-search-search-service-proxy
+      volumes:
+        - ./nginx/search-service/nginx.conf:/etc/nginx/nginx.conf:ro
+        - ./nginx/search-service/conf.d:/etc/nginx/conf.d
+      ports:
+        - "8083:8083"
+      depends_on:
+        - search-service-blue
+        - search-service-green
       networks:
         - document-search-network
 

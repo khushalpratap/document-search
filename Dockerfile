@@ -31,6 +31,9 @@ WORKDIR /app
 
 ARG MODULE
 
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy the generated Spring Boot jar
 COPY --from=builder /workspace/${MODULE}/build/libs/*.jar /app/app.jar
 
