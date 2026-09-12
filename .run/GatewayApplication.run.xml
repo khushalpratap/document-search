@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="GatewayApplication" type="Application" factoryName="Application" nameIsGenerated="true">
-    <option name="MAIN_CLASS_NAME" value="com.example.search.gateway.GatewayApplication" />
+  <configuration default="false" name="GatewayApplication" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.document.search.gateway.GatewayApplication" />
     <module name="document-search-service.gateway.main" />
     <extension name="coverage">
       <pattern>

@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="IndexerApplication" type="Application" factoryName="Application" nameIsGenerated="true">
-    <option name="MAIN_CLASS_NAME" value="com.example.search.indexer.IndexerApplication" />
+  <configuration default="false" name="IndexerApplication" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.document.search.indexer.IndexerApplication" />
     <module name="document-search-service.indexer-service.main" />
     <extension name="coverage">
       <pattern>

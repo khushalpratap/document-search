@@ -1,6 +1,6 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="DocumentApplication" type="Application" factoryName="Application" nameIsGenerated="true">
-    <option name="MAIN_CLASS_NAME" value="com.example.search.document.DocumentApplication" />
+  <configuration default="false" name="DocumentApplication" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="com.document.search.document.DocumentApplication" />
     <module name="document-search-service.document-service.main" />
     <extension name="coverage">
       <pattern>
