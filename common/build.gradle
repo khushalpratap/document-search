@@ -6,4 +6,5 @@ dependencies {
     api 'com.fasterxml.jackson.core:jackson-databind'
     api 'jakarta.validation:jakarta.validation-api'
     implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

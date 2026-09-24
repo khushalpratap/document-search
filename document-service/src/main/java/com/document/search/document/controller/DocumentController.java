@@ -30,6 +30,13 @@ public class DocumentController {
         return service.get(tenantId, id);
     }
 
+    @PutMapping("/{id}")
+    public DocumentResponse update(@RequestHeader(TenantHeaders.TENANT_ID) String tenantId,
+                                   @PathVariable String id,
+                                   @Valid @RequestBody DocumentRequest request) {
+        return service.update(tenantId, id, request);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@RequestHeader(TenantHeaders.TENANT_ID) String tenantId,

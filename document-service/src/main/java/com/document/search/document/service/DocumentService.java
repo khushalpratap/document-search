@@ -4,11 +4,11 @@ import com.document.search.common.DocumentEvent;
 import com.document.search.document.domain.DocumentEntity;
 import com.document.search.document.domain.DocumentRequest;
 import com.document.search.document.domain.DocumentResponse;
+import com.document.search.document.domain.OutboxEntity;
 import com.document.search.document.repository.DocumentRepository;
+import com.document.search.document.repository.OutboxRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,18 +17,15 @@ import java.util.Map;
 @Service
 public class DocumentService {
     private final DocumentRepository repository;
-    private final KafkaTemplate<String, DocumentEvent> kafkaTemplate;
+    private final OutboxRepository outbox;
     private final ObjectMapper objectMapper;
-    private final String topic;
 
     public DocumentService(DocumentRepository repository,
-                           KafkaTemplate<String, DocumentEvent> kafkaTemplate,
-                           ObjectMapper objectMapper,
-                           @Value("${app.kafka.topic:document-events}") String topic) {
+                           OutboxRepository outbox,
+                           ObjectMapper objectMapper) {
         this.repository = repository;
-        this.kafkaTemplate = kafkaTemplate;
+        this.outbox = outbox;
         this.objectMapper = objectMapper;
-        this.topic = topic;
     }
 
     @Transactional
@@ -47,6 +44,15 @@ public class DocumentService {
     }
 
     @Transactional
+    public DocumentResponse update(String tenantId, String id, DocumentRequest request) {
+        DocumentEntity entity = repository.findByIdAndTenantId(id, tenantId)
+                .orElseThrow(() -> new DocumentNotFoundException(id));
+        entity.update(request.title(), request.content(), toJson(request.metadata()));
+        publish(entity, DocumentEvent.EventType.UPDATED);
+        return toResponse(entity);
+    }
+
+    @Transactional
     public void delete(String tenantId, String id) {
         DocumentEntity entity = repository.findByIdAndTenantId(id, tenantId)
                 .orElseThrow(() -> new DocumentNotFoundException(id));
@@ -54,10 +60,17 @@ public class DocumentService {
         publish(entity, DocumentEvent.EventType.DELETED);
     }
 
+    // Records the event in the outbox within the caller's transaction;
+    // OutboxPublisher delivers it to Kafka after commit.
     private void publish(DocumentEntity e, DocumentEvent.EventType type) {
-        kafkaTemplate.send(topic, e.getId(), new DocumentEvent(
+        DocumentEvent event = new DocumentEvent(
                 type, e.getId(), e.getTenantId(), e.getTitle(), e.getContent(),
-                fromJson(e.getMetadataJson()), e.getCreatedAt(), e.getUpdatedAt()));
+                fromJson(e.getMetadataJson()), e.getCreatedAt(), e.getUpdatedAt());
+        try {
+            outbox.save(new OutboxEntity(e.getId(), objectMapper.writeValueAsString(event)));
+        } catch (JsonProcessingException ex) {
+            throw new IllegalStateException("Could not serialize document event", ex);
+        }
     }
 
     private DocumentResponse toResponse(DocumentEntity e) {
