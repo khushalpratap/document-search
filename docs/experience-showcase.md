@@ -14,4 +14,4 @@ A useful interview discussion is a high-severity production issue involving down
 
 ## Tradeoff
 
-The central tradeoff in this assessment is consistency versus throughput/decoupling. PostgreSQL provides durable source-of-truth writes while Kafka and Elasticsearch provide asynchronous indexing. The benefit is independent scaling and isolation of indexing load; the cost is a short period during which a successfully written document may not yet be searchable. A transactional outbox is the production answer to the DB/Kafka dual-write reliability gap.
+The central tradeoff in this assessment is consistency versus throughput/decoupling. PostgreSQL provides durable source-of-truth writes while Kafka and Elasticsearch provide asynchronous indexing. The benefit is independent scaling and isolation of indexing load; the cost is a short period during which a successfully written document may not yet be searchable. A transactional outbox closes the DB/Kafka dual-write reliability gap.

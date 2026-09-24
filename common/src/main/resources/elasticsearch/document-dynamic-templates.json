@@ -1,0 +1,39 @@
+{
+  "dynamic_templates": [
+    {
+      "metadata_strings": {
+        "path_match": "metadata.*",
+        "match_mapping_type": "string",
+        "mapping": { "type": "text", "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } } }
+      }
+    },
+    {
+      "metadata_dates": {
+        "path_match": "metadata.*",
+        "match_mapping_type": "date",
+        "mapping": { "type": "text", "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } } }
+      }
+    },
+    {
+      "metadata_longs": {
+        "path_match": "metadata.*",
+        "match_mapping_type": "long",
+        "mapping": { "type": "text", "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } } }
+      }
+    },
+    {
+      "metadata_doubles": {
+        "path_match": "metadata.*",
+        "match_mapping_type": "double",
+        "mapping": { "type": "text", "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } } }
+      }
+    },
+    {
+      "metadata_booleans": {
+        "path_match": "metadata.*",
+        "match_mapping_type": "boolean",
+        "mapping": { "type": "text", "fields": { "keyword": { "type": "keyword", "ignore_above": 256 } } }
+      }
+    }
+  ]
+}

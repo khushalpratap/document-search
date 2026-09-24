@@ -226,6 +226,19 @@ curl http://localhost:8080/documents/<DOCUMENT_ID> \
   -H 'X-Tenant-Id: tenant-001'
 ```
 
+### Update document
+
+Replaces the title, content and metadata of a document owned by the tenant and publishes an update event so the search
+projection is refreshed.
+
+```bash
+curl -X PUT http://localhost:8080/documents/<DOCUMENT_ID> \
+  -H 'X-API-Key: assessment-key' \
+  -H 'X-Tenant-Id: tenant-001' \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"Distributed Systems Architecture (2nd ed.)","content":"...","metadata":{"category":"technology"}}'
+```
+
 ### Delete document
 
 Deletes the document from the source of truth and publishes a deletion event so the search projection can be removed.
@@ -324,11 +337,13 @@ Document Service
   |
   | validate request
   |
-  +----> PostgreSQL
-  |       durable document
+  +----> PostgreSQL (one transaction)
+  |       durable document + outbox row
+  |
+Outbox Publisher (polls every 500 ms)
   |
   +----> Kafka
-          document.created
+          document-events
               |
               v
         Indexer Service
@@ -338,7 +353,8 @@ Document Service
           searchable copy
 ```
 
-The document is first persisted in PostgreSQL. The search index is updated asynchronously through Kafka.
+The document and its event are first persisted together in PostgreSQL. The search index is updated asynchronously
+through Kafka once the outbox publisher relays the event.
 
 #### Why asynchronous indexing?
 
@@ -426,7 +442,8 @@ The prototype uses a mapping where:
 - `tenantId` = `keyword`
 - `title` = `text`
 - `content` = `text`
-- `metadata` = object
+- `metadata` = object; every scalar value (string, number, boolean, date) is mapped by dynamic templates as `text`
+  with a `keyword` sub-field, so any metadata field can be filtered and faceted on regardless of its JSON type
 - timestamps = date fields
 
 ### Redis – Distributed Rate Limiting
@@ -652,22 +669,23 @@ Production failure scenarios and controls:
 
 ### Transactional Outbox
 
-The prototype writes to PostgreSQL and publishes Kafka asynchronously. In production, I would introduce a transactional
-outbox:
+Document Service uses a transactional outbox:
 
 ```text
 DB Transaction
  ├── document row
- └── outbox event
+ └── outbox event   (document_outbox table)
 
-Outbox Publisher
+Outbox Publisher (@Scheduled, row-locked batch, id order)
        |
        v
-     Kafka
+     Kafka          → row deleted once the broker acknowledges
 ```
 
-This avoids the classic failure where the database transaction commits successfully but the application crashes before
-publishing the Kafka event.
+This avoids the classic failures where the database commits but the Kafka publish is lost, or Kafka receives an event
+for a transaction that later rolls back. Delivery is at-least-once and per-document order is preserved; the indexer's
+upsert/delete writes are idempotent, so a redelivered event is harmless. If Kafka is down, events accumulate in the
+outbox and are sent in order once it recovers.
 
 ---
 
@@ -944,7 +962,7 @@ independently during a technical discussion.
 | Eventual consistency                  | Better availability and decoupling                                                        |
 | Stateless services                    | Easy horizontal scaling                                                                   |
 | Gateway as policy boundary            | Centralized authentication/rate limiting                                                  |
-| Transactional outbox in production    | Prevent DB/Kafka dual-write inconsistency                                                 |
+| Transactional outbox                  | Prevent DB/Kafka dual-write inconsistency                                                 |
 | Kubernetes in production              | Scaling, health management and zero-downtime deployment                                   |
 | Nginx blue-green for `search-service` | Zero-downtime cutover/rollback demonstrated at prototype scale, without a gateway restart |
 
@@ -975,7 +993,7 @@ This submission intentionally distinguishes prototype implementation from produc
 - Single-node development dependencies.
 - Local Caffeine cache.
 - Basic Redis-backed rate limiting.
-- Asynchronous Kafka indexing.
+- Asynchronous Kafka indexing via a transactional outbox.
 - Elasticsearch used as the search projection.
 - Blue-green deployment implemented for `search-service` (nginx-based, script-driven cutover — see §6), rather than only
   described as a future concern.
@@ -984,7 +1002,7 @@ This submission intentionally distinguishes prototype implementation from produc
 
 - JWT/OIDC-based authentication.
 - Trusted tenant claims and RBAC/ABAC.
-- Transactional outbox.
+- CDC-based outbox relay (e.g. Debezium) instead of polling.
 - HA/multi-AZ infrastructure.
 - Replicated Kafka, Elasticsearch, PostgreSQL and Redis.
 - Distributed tracing and comprehensive SLO monitoring.

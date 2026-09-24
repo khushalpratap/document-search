@@ -10,7 +10,7 @@
 
 ## Resilience
 
-- Transactional outbox for reliable DB-to-Kafka delivery.
+- CDC-based outbox relay (e.g. Debezium) to replace the polling outbox publisher at higher write volumes.
 - Kafka replication factor >= 3 and producer idempotence.
 - Retry with backoff and DLQ for poison indexing events.
 - Idempotent indexer operations keyed by document ID and event/version ordering.

@@ -11,7 +11,7 @@
 
 ## Consistency
 
-Document writes are strongly committed to PostgreSQL before the request returns. Search is eventually consistent because Elasticsearch is populated asynchronously from Kafka. A transactional outbox is the production recommendation to avoid the database/Kafka dual-write gap.
+Document writes are strongly committed to PostgreSQL before the request returns. Search is eventually consistent because Elasticsearch is populated asynchronously from Kafka. Document Service writes each event to a transactional outbox in the same PostgreSQL transaction as the document change, and a scheduled publisher relays it to Kafka, closing the database/Kafka dual-write gap.
 
 ## Tenant isolation
 
