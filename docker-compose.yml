@@ -155,6 +155,24 @@
         - document-search-network
 
 
+    ingest-service:
+      build:
+        context: ./ingest-service
+        dockerfile: Dockerfile
+      container_name: document-search-ingest-service
+      environment:
+        DATABASE_URL: postgres://document:document@postgres:5432/documentdb?sslmode=disable
+        WORKER_COUNT: "8"
+        QUEUE_SIZE: "1000"
+      ports:
+        - "8084:8080"
+      depends_on:
+        postgres:
+          condition: service_healthy
+      networks:
+        - document-search-network
+
+
     indexer-service:
       build:
         context: .
